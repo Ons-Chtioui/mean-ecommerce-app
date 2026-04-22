@@ -1,0 +1,168 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-box-seam"></i> 
+            {{ isEditMode ? 'Modifier le Produit' : 'Nouveau Produit' }}
+          </h4>
+        </div>
+        <div class="card-body">
+          
+          <!-- MESSAGE D'ALERTE SI PAS DE CATÉGORIES -->
+          <div class="alert alert-warning" *ngIf="categories.length === 0">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Attention !</strong> Aucune catégorie disponible. 
+            <a routerLink="/categories/new" class="alert-link">Créer une catégorie d'abord</a>.
+          </div>
+
+          <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+            
+            <!-- Nom -->
+            <div class="mb-3">
+              <label class="form-label">Nom du produit *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                formControlName="name"
+                placeholder="Ex: Samsung Galaxy S24"
+                [class.is-invalid]="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+              <div class="invalid-feedback" *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+                Le nom doit contenir au moins 3 caractères
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label">Description *</label>
+              <textarea 
+                class="form-control" 
+                rows="4"
+                formControlName="description"
+                placeholder="Description détaillée du produit..."
+                [class.is-invalid]="productForm.get('description')?.invalid && productForm.get('description')?.touched"></textarea>
+              <div class="invalid-feedback" *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched">
+                La description doit contenir au moins 10 caractères
+              </div>
+            </div>
+
+            <!-- Prix et Stock -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Prix (TND) *</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  formControlName="price"
+                  step="0.001"
+                  placeholder="0.000"
+                  [class.is-invalid]="productForm.get('price')?.invalid && productForm.get('price')?.touched">
+                <div class="invalid-feedback" *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched">
+                  Le prix doit être positif
+                </div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Stock *</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  formControlName="stock"
+                  placeholder="0"
+                  [class.is-invalid]="productForm.get('stock')?.invalid && productForm.get('stock')?.touched">
+                <div class="invalid-feedback" *ngIf="productForm.get('stock')?.invalid && productForm.get('stock')?.touched">
+                  Le stock doit être positif
+                </div>
+              </div>
+            </div>
+
+            <!-- Image URL -->
+            <div class="mb-3">
+              <label class="form-label">URL de l'image</label>
+              <input 
+                type="url" 
+                class="form-control" 
+                formControlName="image"
+                placeholder="https://example.com/image.jpg">
+              <small class="text-muted">Laissez vide pour utiliser l'image par défaut</small>
+            </div>
+
+            <!-- 🔥 CATÉGORIE (UTILISE .id au lieu de ._id) -->
+<div class="mb-3">
+  <label class="form-label">Catégorie *</label>
+  <select 
+    class="form-select"
+    formControlName="category"
+    [class.is-invalid]="productForm.get('category')?.invalid && productForm.get('category')?.touched">
+    <option [ngValue]="null">-- Sélectionnez une catégorie --</option>
+    <option *ngFor="let cat of categories" [ngValue]="cat.id">
+      {{ cat.name }}
+    </option>
+  </select>
+  <div class="invalid-feedback" *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched">
+    Veuillez sélectionner une catégorie
+  </div>
+</div>
+
+            <!-- Rating avec étoiles -->
+            <div class="mb-3">
+              <label class="form-label">Note (0-5) *</label>
+              <div class="d-flex align-items-center gap-3">
+                <div>
+                  <span 
+                    *ngFor="let star of getStars(productForm.get('rating')?.value); let i = index"
+                    (click)="setRating(i + 1)"
+                    style="cursor: pointer; font-size: 1.5rem;">
+                    <i [class]="star === 'full' ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'"></i>
+                  </span>
+                </div>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  style="width: 100px;"
+                  formControlName="rating"
+                  min="0"
+                  max="5"
+                  step="0.5"
+                  [class.is-invalid]="productForm.get('rating')?.invalid && productForm.get('rating')?.touched">
+              </div>
+              <div class="invalid-feedback" *ngIf="productForm.get('rating')?.invalid && productForm.get('rating')?.touched">
+                La note doit être entre 0 et 5
+              </div>
+            </div>
+
+            <!-- Publié -->
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  formControlName="published"
+                  id="publishedSwitch">
+                <label class="form-check-label" for="publishedSwitch">
+                  Publier le produit
+                </label>
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="d-flex gap-2">
+              <button 
+                type="submit" 
+                class="btn btn-primary" 
+                [disabled]="productForm.invalid || categories.length === 0">
+                <i class="bi bi-save"></i> 
+                {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+              </button>
+              <a routerLink="/products" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Annuler
+              </a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

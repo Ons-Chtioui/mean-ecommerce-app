@@ -1,0 +1,53 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-tags"></i> 
+            {{ isEditMode ? 'Modifier la Catégorie' : 'Nouvelle Catégorie' }}
+          </h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+            
+            <!-- Nom -->
+            <div class="mb-3">
+              <label class="form-label">Nom de la catégorie *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                formControlName="name"
+                [class.is-invalid]="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">
+              <div class="invalid-feedback" *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">
+                Le nom doit contenir au moins 3 caractères
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label class="form-label">Description</label>
+              <textarea 
+                class="form-control" 
+                rows="3"
+                formControlName="description"
+                placeholder="Description optionnelle de la catégorie"></textarea>
+            </div>
+
+            <!-- Boutons -->
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="categoryForm.invalid">
+                <i class="bi bi-save"></i> 
+                {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
+              </button>
+              <a routerLink="/categories" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Annuler
+              </a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

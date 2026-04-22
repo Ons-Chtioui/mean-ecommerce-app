@@ -1,0 +1,45 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-tags"></i> Liste des Catégories</h2>
+    <a routerLink="/categories/new" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nouvelle Catégorie
+    </a>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-4" *ngFor="let category of categories">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="bi bi-tag-fill text-info"></i> {{ category.name }}
+          </h5>
+          <p class="card-text text-muted">
+            {{ category.description || 'Aucune description' }}
+          </p>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="btn-group w-100">
+            <a 
+              [routerLink]="['/categories/edit', getCategoryId(category)]" 
+              class="btn btn-sm btn-warning">
+              <i class="bi bi-pencil"></i> Modifier
+            </a>
+            <button 
+              (click)="deleteCategory(category)" 
+              class="btn btn-sm btn-danger">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 text-center py-5" *ngIf="categories.length === 0">
+      <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+      <p class="text-muted">Aucune catégorie trouvée</p>
+      <a routerLink="/categories/new" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Créer une catégorie
+      </a>
+    </div>
+  </div>
+</div>
