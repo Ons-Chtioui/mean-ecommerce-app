@@ -1,0 +1,62 @@
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: ecommerce-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: ecommerce
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ecommerce-network
+
+  # ── FastAPI Backend ───────────────────────────────────────────────────────────
+  fastapi:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: ecommerce-fastapi
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=ecommerce
+      - EXCHANGE_RATE_API_URL=https://open.er-api.com/v6/latest
+      - UPLOAD_DIR=uploads/products
+      - PORT=8000
+    volumes:
+      - uploads_data:/app/uploads/products
+    depends_on:
+      - mongodb
+    networks:
+      - ecommerce-network
+
+  # ── Angular Frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./ecommerce-frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - fastapi
+    networks:
+      - ecommerce-network
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  mongo_data:
+    name: ecommerce_mongo_data
+  uploads_data:
+    name: ecommerce_uploads_data
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  ecommerce-network:
+    name: ecommerce-network
+    driver: bridge

@@ -1,0 +1,52 @@
+# ── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.hypothesis/
+
+# ── Environment files ─────────────────────────────────────────────────────────
+.env
+*.env.local
+*.env.production
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# (keep Dockerfiles and docker-compose.yml — they are part of the project)
+
+# ── Angular ───────────────────────────────────────────────────────────────────
+ecommerce-frontend/dist/
+ecommerce-frontend/.angular/
+
+# ── Uploads (runtime data) ────────────────────────────────────────────────────
+backend-python/uploads/
+backend/uploads/
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Kiro internal ─────────────────────────────────────────────────────────────
+.kiro/
+
+# ── Old Node.js backend (replaced by Python) ─────────────────────────────────
+backend/node_modules/

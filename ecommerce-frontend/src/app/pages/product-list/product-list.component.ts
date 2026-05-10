@@ -2,16 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { ProductService } from '../../services/product.service';
 import { CategoryService } from '../../services/category.service';
+import { CurrencyService } from '../../services/currency.service';
 import { Product } from '../../models/product.model';
 import { Category } from '../../models/category.model';
+import { CurrencySelectorComponent } from '../../components/currency-selector/currency-selector.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, CurrencySelectorComponent],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.css'
 })
@@ -20,12 +23,22 @@ export class ProductListComponent implements OnInit {
   filteredProducts: Product[] = [];
   paginatedProducts: Product[] = [];
   categories: Category[] = [];
-  
+
+  // Currency
+  selectedCurrency: string = 'TND';
+  convertedPrices: Map<string, number> = new Map();
+  isLoadingCurrency: boolean = false;
+  currencyError: string = '';
+
+  // Loading & errors
+  isLoading: boolean = false;
+  errorMessage: string = '';
+
   // Filtres
   searchTerm: string = '';
   selectedCategoryId: string = '';
   sortBy: string = '';
-  
+
   // Pagination
   currentPage: number = 1;
   itemsPerPage: number = 6;
@@ -34,7 +47,8 @@ export class ProductListComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private currencyService: CurrencyService
   ) { }
 
   ngOnInit(): void {
@@ -43,29 +57,79 @@ export class ProductListComponent implements OnInit {
   }
 
   loadProducts(): void {
-    this.productService.getAll().subscribe({
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.productService.getAll().pipe(
+      finalize(() => this.isLoading = false)
+    ).subscribe({
       next: (data) => {
         this.products = data;
         this.applyFilters();
-        console.log('✅ Produits chargés:', data);
+        // Re-apply currency conversion if a non-default currency is selected
+        if (this.selectedCurrency !== 'TND') {
+          this.convertAllPrices(this.selectedCurrency);
+        }
       },
       error: (error) => {
-        console.error('❌ Erreur chargement produits', error);
-        Swal.fire('Erreur', 'Impossible de charger les produits', 'error');
+        this.errorMessage = 'Impossible de charger les produits. Vérifiez que le serveur est démarré.';
+        Swal.fire('Erreur', this.errorMessage, 'error');
       }
     });
   }
 
   loadCategories(): void {
     this.categoryService.getAll().subscribe({
-      next: (data) => {
-        this.categories = data;
-        console.log('✅ Catégories chargées:', data);
-      },
-      error: (error) => {
-        console.error('❌ Erreur chargement catégories', error);
-      }
+      next: (data) => { this.categories = data; },
+      error: () => {}
     });
+  }
+
+  onCurrencyChange(currency: string): void {
+    this.selectedCurrency = currency;
+    if (currency === 'TND') {
+      this.convertedPrices.clear();
+      this.currencyError = '';
+    } else {
+      this.convertAllPrices(currency);
+    }
+  }
+
+  convertAllPrices(toCurrency: string): void {
+    this.isLoadingCurrency = true;
+    this.currencyError = '';
+    this.convertedPrices.clear();
+
+    const productIds = this.products.map(p => this.getProductId(p));
+    let completed = 0;
+
+    if (this.products.length === 0) {
+      this.isLoadingCurrency = false;
+      return;
+    }
+
+    this.products.forEach(product => {
+      const id = this.getProductId(product);
+      this.currencyService.convert(product.price, 'TND', toCurrency).pipe(
+        finalize(() => {
+          completed++;
+          if (completed === this.products.length) {
+            this.isLoadingCurrency = false;
+          }
+        })
+      ).subscribe({
+        next: (result) => {
+          this.convertedPrices.set(id, result.converted_amount);
+        },
+        error: () => {
+          this.currencyError = 'Service de conversion indisponible.';
+        }
+      });
+    });
+  }
+
+  getDisplayPrice(product: Product): number {
+    const id = this.getProductId(product);
+    return this.convertedPrices.has(id) ? this.convertedPrices.get(id)! : product.price;
   }
 
   applyFilters(): void {
